@@ -1,2 +1,12 @@
 # sshsetup
-Linux/macOS script that installs/upgrades openssh-server, sets remote host variables, creates and transfers rsa ssh authentication keys, adds enteries to ~/.ssh/config for passwordless login, and adds host entries to /etc/hosts
+
+An interactive bash script that presents the following options:
+
+1. Install/Update openssh-server (Linux apt-get)
+2. Configure remote host variables
+3. Setup ssh keys in ~/.ssh & transfer to remote host
+4. Add remote host entry to ~/.ssh/config
+5. Add remote host entry to /etc/hosts
+6. Quit
+
+Compatible with Linux/UNIX systems.
