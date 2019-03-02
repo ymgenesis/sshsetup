@@ -2,7 +2,7 @@
 CURRENTDIR=$(PWD)
 
   ############################
- #		Environment			#
+ #	 Environment	    #
 ############################
 
 ## Colour text variables
@@ -163,7 +163,7 @@ remotevarcheck () {
 
 
   ############################
- #			Main			#
+ #	     Main           #
 ############################
 
 
