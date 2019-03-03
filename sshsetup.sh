@@ -7,7 +7,7 @@ CURRENTDIR=$(PWD)
 ############################
 
   ############################
- #	 Environment	    #
+ #	 Environment	   #
 ############################
 
 ## Colour text variables
@@ -46,7 +46,7 @@ menuprompt () {
 		read -p "Main Menu? [y/n]: " ANS2
 		if [ "$ANS2" = "n" -o "$ANS2" = "N" ];
 		then
-			continue
+			:
 		elif [ "$ANS2" = "y" -o "$ANS2" = "Y" ];
 		then
 			echo
@@ -54,8 +54,6 @@ menuprompt () {
 			echo
 			sleep 0.7
 			break
-		else
-			continue
 		fi
 	done
 }
@@ -69,51 +67,13 @@ proceedprompt () {
 		read -p "Proceed? [y/n]: " ANS4
 		if [ "$ANS4" = "n" -o "$ANS4" = "N" ];
 		then
-			continue
+			:
 		elif [ "$ANS4" = "y" -o "$ANS4" = "Y" ];
 		then
 			sleep 0.7
 			break
-		else
-			continue
 		fi
 	done
-}
-
-## ~/.ssh check and create function
-
-sshcheckandcreate () {
-	SSHDIRVAR=n
-	if [ ! -d $HOME/.ssh ];
-	then
-		read -p ""$C"$HOME/.ssh"$D" does not exist. This is where our ssh keys and config file should be stored. Create it now? [y/n]: " SSHDIRVAR
-		if [ "$SSHDIRVAR" = "y" -o "$SSHDIRVAR" = "Y" ];
-		then
-			echo
-			echo "Attempting to backup $HOME/.ssh as sshbak to your home folder just in case. ignore the error this will produce, as"\
-			"it means $HOME/.ssh doesn't exist, and we're clear to create it."
-			echo
-			sleep 1
-			cp -r $HOME/.ssh $HOME/sshbak
-			echo
-			sleep 1
-			echo "Creating $HOME/.ssh..."
-			echo
-			sleep 1
-			mkdir $HOME/.ssh
-			echo "Created! Continuing..."
-			echo
-			sleep 0.5
-		else
-			echo
-			echo ""$R"Not creating"$D". This tool requires ~/.ssh/ to exist."
-			echo
-			echo "Returning..."
-			echo
-			sleep 3
-			continue
-		fi
-	fi
 }
 
 ## Remote host variables check function
@@ -162,7 +122,7 @@ remotevarcheck () {
 			echo "Please run option 2 first." 
 			echo
 			menuprompt
-			continue
+			break
 		fi
 }
 
@@ -203,8 +163,6 @@ do
 		sudo apt-get install openssh-server
 		echo
 		menuprompt
-		
-	continue
 
 ## 2. Configure remote host variables
 	
@@ -224,9 +182,7 @@ do
 			if [ "$PORTVAR" = "" ] || [[ ! "$PORTVAR" =~ ^-?[0-9]+$ ]];
 			then
 				echo ""$R"Please enter a number"$D"."
-				continue
 			fi
-			break
 		done
 		#IP
 		while [[ $IPVAR = "" ]] || [[ ! $IPVAR =~ ^-?[0-9.]+$ ]];
@@ -235,9 +191,7 @@ do
 			if [ "$IPVAR" = "" ] || [[ ! "$IPVAR" =~ ^-?[0-9.]+$ ]];
 			then
 				echo ""$R"Please enter an ip (x.x.x.x)"$D"."
-				continue
 			fi
-			break
 		done
 		#Username
 		while [[ $USERVAR = "" ]] || [[ $USERVAR = *[[:space:]]* ]];
@@ -246,9 +200,7 @@ do
 			if [ "$USERVAR" = "" ] || [[ "$USERVAR" = *[[:space:]]* ]];
 			then
 				echo ""$R"Please enter a username without spaces"$D"."
-				continue
 			fi
-			break
 		done
 		#Hostname
 		while [[ $HOSTVAR = "" ]] || [[ $HOSTVAR = *[[:space:]]* ]];
@@ -257,18 +209,14 @@ do
 			if [ "$HOSTVAR" = "" ] || [[ "$HOSTVAR" = *[[:space:]]* ]];
 			then
 				echo ""$R"Please enter a hostname without spaces"$D"."
-				continue
 			fi
-			break
 		done
 		echo
 		sleep 0.5
 		echo ""$G"Configured!"$D""
 		echo
 		menuprompt
-		
-	continue
-		
+	
 ## 3. Setup & send ssh keys to remote host
 	
 	elif [ $ANS = 3 ];
@@ -277,43 +225,82 @@ do
 		clear
 		border "Setup & Send SSH Keys"
 		echo
-		# First check to see if ~/.ssh exists. Create it if it doesn't. Function
-		sshcheckandcreate
-		cd $HOME/.ssh
-		# Check to see if remote host variables are set
-		remotevarcheck
-		echo
-		proceedprompt
-		echo
-		echo ""$G"Creating"$D" keys "$C"$HOSTVAR"$D" & "$C"$HOSTVAR.pub"$D" at ~/.ssh/. An empty passphrase stores keys in plain text."
-		echo
-		sleep 0.5
-		ssh-keygen -f $HOSTVAR;
-		echo
-		sleep 0.5
-		echo ""$G"Created!"$D""
-		echo
-		sleep 0.7
-		echo "Attempting to send keys to "$C"$IPVAR"$D" on ssh port "$C"$PORTVAR"$D" with username "$C"$USERVAR"$D"."
-		echo
-		echo ""$P"Note"$D": If this is your first time logging in to "$C"$HOSTVAR"$D", you'll need to respond 'yes' to add its"\
-		"fingerprint to your ~/.ssh/known_hosts file. You'll need to provide ssh with "$C"$USERVAR"$D"'s password on "$C"$IPVAR"$D"."
-		echo
-		sleep 0.7
-		proceedprompt
-		echo
-		ssh-copy-id -i $HOSTVAR.pub -p $PORTVAR $USERVAR@$IPVAR
-		sleep 0.7
-		echo ""$G"Keys transferred!"$D""
-		echo
-		sleep 0.7
-		echo ""$P"Note"$D": Passwordless login via rsa keys won't work until you run option 4 (add ~/.ssh/config entry)."
-		echo
-		sleep 0.7
-		menuprompt
-		
-	continue	
-	
+		# First check to see if ~/.ssh exists. Create and continue if user agrees
+		SSHDIRVAR=y
+		while [ "$SSHDIRVAR" = "y" -o "$SSHDIRVAR" = "Y" ];
+		do
+			if [ ! -d $HOME/.ssh ];
+			then
+			read -p ""$C"$HOME/.ssh"$D" "$R"does not exist"$D". This is where our ssh keys and config file should be stored. Create it now? [y/n]: " SSHDIRVAR
+				
+				if [ "$SSHDIRVAR" = "y" -o "$SSHDIRVAR" = "Y" ];
+				then
+					echo
+					echo "Attempting to backup $HOME/.ssh as sshbak to your home folder just in case. ignore the error this will produce, as"\
+					"it means $HOME/.ssh doesn't exist, and we're clear to create it."
+					echo
+					sleep 1
+					cp -r $HOME/.ssh $HOME/sshbak
+					echo
+					sleep 1
+					echo ""$C"Creating"$D" $HOME/.ssh..."
+					echo
+					sleep 1
+					mkdir $HOME/.ssh
+					echo ""$G"Created"$D"! Continuing..."
+					sleep 0.5
+				
+				elif [ "$SSHDIRVAR" = "n" -o "$SSHDIRVAR" = "N" ];
+				then
+					echo
+					echo ""$R"Not creating"$D". This tool requires ~/.ssh/ to exist."
+					echo
+					echo "Returning..."
+					echo
+					sleep 2
+				else
+					SSHDIRVAR=y
+
+				fi
+			elif [ -d $HOME/.ssh ];
+			then
+				# Continue with key creation
+				cd $HOME/.ssh
+				# Check to see if remote host variables are set
+				remotevarcheck
+				echo
+				proceedprompt
+				echo
+				echo ""$G"Creating"$D" keys "$C"$HOSTVAR"$D" & "$C"$HOSTVAR.pub"$D" at ~/.ssh/. An empty passphrase stores keys in plain text."
+				echo
+				sleep 0.5
+				ssh-keygen -f $HOSTVAR;
+				echo
+				sleep 0.5
+				echo ""$G"Created!"$D""
+				echo
+				sleep 0.7
+				echo "Attempting to send keys to "$C"$IPVAR"$D" on ssh port "$C"$PORTVAR"$D" with username "$C"$USERVAR"$D"."
+				echo
+				echo ""$P"Note"$D": If this is your first time logging in to "$C"$HOSTVAR"$D", you'll need to respond 'yes' to add its"\
+				"fingerprint to your ~/.ssh/known_hosts file. You'll need to provide ssh with "$C"$USERVAR"$D"'s password on "$C"$IPVAR"$D"."
+				echo
+				sleep 0.7
+				proceedprompt
+				echo
+				ssh-copy-id -i $HOSTVAR.pub -p $PORTVAR $USERVAR@$IPVAR
+				sleep 0.7
+				echo ""$G"Keys transferred!"$D""
+				echo
+				sleep 0.7
+				echo ""$P"Note"$D": Passwordless login via rsa keys won't work until you run option 4 (add ~/.ssh/config entry)."
+				echo
+				sleep 0.7
+				menuprompt
+				break
+			fi
+		done
+
 ## 4. Add remote host entry to ~/.ssh/config
 	
 	elif [ $ANS = 4 ];
@@ -359,9 +346,7 @@ do
 		echo
 		sleep 0.7
 		menuprompt
-		
-	continue
-	
+
 ## 5. Add remote host entry to /etc/hosts
 	
 	elif [ $ANS = 5 ];
@@ -408,8 +393,6 @@ do
 		echo
 		sleep 0.7
 		menuprompt
-		
-	continue
 
 ## 6. Quitting
 	
@@ -424,8 +407,6 @@ do
 		echo
 		echo "$R"Invalid selection. Returning..."$D"
 		echo
-		sleep 0.7
-		continue	
+		sleep 0.7	
 	fi
-	break
 done
