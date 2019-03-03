@@ -2,7 +2,7 @@
 CURRENTDIR=$(PWD)
 
 ############################
-# 	sshsetup v1.0      #
+# 	sshsetup v1.1      #
 # Written by Matthew Janik #
 ############################
 
