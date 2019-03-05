@@ -1,6 +1,10 @@
 # sshsetup
 
-An interactive Linux/UNIX bash script that presents the following options:
+An interactive Linux/UNIX bash script that attempts to streamline the setup of SSH connections on new systems. It executes as a 'simple' interactive terminal at prompt-level, or as a pretty whiptail menu (if it's installed on your system. If not, it will execute the 'simple' version).
+
+Note: Whiptail should be installed by default on Debian systems. You can also install it using `sudo apt-get install whiptail`.
+
+The following options are presented to the user in both 'simple' and whiptail versions:
 
 1. Install/Update openssh-server (Linux apt-get)
 2. Configure remote host variables
@@ -23,9 +27,9 @@ Options 3, 4, & 5 require option 2 be completed.
 
 ## 3 - Setup SSH Keys in ~/.ssh & Transfer to Remote Host
 
-This option first checks if the directory ~/.ssh exists. If it doesn't, it will attempt to back it up as a fail-safe (which will obviously fail), then prompt the user to create it. It will then check if the remote host variables have been set (option 2). If not, it will tell the user to complete option 2, then send the user back to the main menu.
+This option first checks if the directory ~/.ssh exists. If it doesn't, it will prompt the user to create it.
 
-After these conditions are met, it will create ssh keys (private and .pub) in ~/.ssh using the hostname variable (set in option 2) as the filename. It executes `ssh-keygen -f $hostname`.
+It will then create ssh keys (private and .pub) in ~/.ssh using the hostname variable (set in option 2) as the filename. It executes `ssh-keygen -f $hostname`. The whiptail version automatically creates the keys with no passphrase to increase automation (might change). 
 
 It then uses the variables set in option 2 to transfer the newly created .pub key to the remote host the user is trying to connect with. It executes `ssh-copy-id -i $hostname.pub -p $port $user@$ip`.
 
