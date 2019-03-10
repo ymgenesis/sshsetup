@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ############################
-# 	sshsetup v1.4      #
+# 	sshsetup v1.5      #
 # Written by Matthew Janik #
 ############################
 
@@ -378,6 +378,220 @@ optionfive () {
 	fi
 }
 
+# Option 6 - Autosetup function - runs all options with minimal prompting
+
+autosetup () {
+	#Set variables
+	PORTVAR=
+	IPVAR=
+	USERVAR=
+	HOSTVAR=
+	#Port
+	while [[ $PORTVAR = "" ]] || [[ ! "$PORTVAR" =~ ^-?[0-9]+$ ]];
+	do
+	read -rp "Enter remote host's ${C}ssh port${D}: " PORTVAR
+		if [ "$PORTVAR" = "" ] || [[ ! "$PORTVAR" =~ ^-?[0-9]+$ ]];
+		then
+			echo "${R}Please enter a number${D}."
+		fi
+	done
+	#IP
+	while [[ $IPVAR = "" ]] || [[ ! $IPVAR =~ ^-?[0-9.]+$ ]];
+	do
+	read -rp "Enter remote host's ${C}IP address${D}: " IPVAR
+		if [ "$IPVAR" = "" ] || [[ ! "$IPVAR" =~ ^-?[0-9.]+$ ]];
+		then
+			echo "${R}Please enter an ip (x.x.x.x)${D}."
+		fi
+	done
+	#Username
+	while [[ $USERVAR = "" ]] || [[ $USERVAR = *[[:space:]]* ]];
+	do
+	read -rp "Enter remote host's ${C}username${D}: " USERVAR
+		if [ "$USERVAR" = "" ] || [[ "$USERVAR" = *[[:space:]]* ]];
+		then
+			echo "${R}Please enter a username without spaces${D}."
+		fi
+	done
+	#Hostname
+	while [[ $HOSTVAR = "" ]] || [[ $HOSTVAR = *[[:space:]]* ]];
+	do
+	read -rp "Enter remote host's ${C}hostname${D} (used to name ssh keys and ~/.ssh/config entry): " HOSTVAR
+		if [ "$HOSTVAR" = "" ] || [[ "$HOSTVAR" = *[[:space:]]* ]];
+		then
+			echo "${R}Please enter a hostname without spaces${D}."
+		fi
+	done
+	echo
+	sleep 0.5
+	echo "${G}Configured!${D}"
+	#Create keys
+	SSHDIRVAR=y
+	if [ ! -d "$HOME"/.ssh ];
+	then
+	read -rp "${C}$HOME/.ssh${D} ${R}does not exist${D}. This is where our ssh keys and config file should be stored. Create it now? [y/n]: " SSHDIRVAR
+		
+		if [ "$SSHDIRVAR" = "y" ] || [ "$SSHDIRVAR" = "Y" ];
+		then
+			echo
+			echo "Attempting to backup $HOME/.ssh as sshbak to your home folder just in case. ignore the error this will produce, as"\
+			"it means $HOME/.ssh doesn't exist, and we're clear to create it."
+			echo
+			sleep 1
+			cp -r "$HOME"/.ssh "$HOME"/sshbak
+			echo
+			sleep 1
+			echo "${C}Creating${D} $HOME/.ssh..."
+			echo
+			sleep 1
+			mkdir "$HOME"/.ssh
+			echo "${G}Created${D}! Continuing..."
+			sleep 0.5
+			
+		elif [ "$SSHDIRVAR" = "n" ] || [ "$SSHDIRVAR" = "N" ];
+		then
+			echo
+			echo "${R}Not creating${D}. This tool requires ~/.ssh/ to exist."
+			echo
+			echo "Returning..."
+			echo
+			sleep 2
+		else
+			SSHDIRVAR=y
+		fi
+	elif [ -d "$HOME"/.ssh ];
+	then
+		cd "$HOME"/.ssh
+		remotevarlist
+		echo
+		# Check to see if remote host variables are set
+		if [ -z ${PORTVAR+x} ] && [ -z ${IPVAR+x} ] && [ -z ${USERVAR+x} ] && [ -z ${HOSTVAR+x} ];
+		then
+			echo "${R}All remote host variables aren't set${D}."
+			echo
+			sleep 1
+			echo "Please run option 2 first." 
+			echo
+			menuprompt
+		else 
+			#Continue with key creation
+			proceedprompt
+			echo
+			echo "${G}Creating${D} keys ${C}${HOSTVAR}${D} & ${C}${HOSTVAR}.pub${D} at ~/.ssh/. An empty passphrase stores keys in plain text."
+			echo
+			sleep 0.5
+			ssh-keygen -f "$HOSTVAR";
+			echo
+			sleep 0.5
+			echo "${G}Created!${D}"
+			echo
+			sleep 0.7
+			echo "Attempting to send keys to ${C}${IPVAR}${D} on ssh port ${C}${PORTVAR}${D} with username ${C}${USERVAR}${D}."
+			echo
+			echo "${P}Note${D}: If this is your first time logging in to ${C}${HOSTVAR}${D}, you'll need to respond 'yes' to add its"\
+			"fingerprint to your ~/.ssh/known_hosts file. You'll need to provide ssh with ${C}${USERVAR}${D}'s password on ${C}${IPVAR}${D}."
+			echo
+			sleep 0.7
+			ssh-copy-id -i "$HOSTVAR".pub -p "$PORTVAR" "$USERVAR"@"$IPVAR"
+			sleep 0.7
+			echo "${G}Keys transferred!${D}"
+			echo
+			sleep 0.7
+			echo "${P}Note${D}: Passwordless login via rsa keys won't work until you run option 4 (add ~/.ssh/config entry)."
+			sleep 0.7
+		fi
+	fi
+	# Config entry
+	echo
+	CONFIGVAR="$HOME"/.ssh/config
+	# Check to see if remote host variables are set
+	if [ -z ${PORTVAR+x} ] && [ -z ${IPVAR+x} ] && [ -z ${USERVAR+x} ] && [ -z ${HOSTVAR+x} ];
+	then
+		echo "${R}All remote host variables aren't set${D}."
+		echo
+		sleep 1
+		echo "Please run option 2 first." 
+		echo
+		menuprompt
+	 else 
+		if [ -e "$CONFIGVAR" ];
+		then
+			#Backup ~/.ssh/config
+			echo "${C}${CONFIGVAR}${D} exists. Backing it up to ~/.ssh/config.bak first, just in case."
+			cp "$HOME"/.ssh/config "$HOME"/.ssh/config.bak
+			echo
+			sleep 0.7
+			echo "${G}Completed backup!${D} Continuing..."
+			echo
+			sleep 0.7
+		fi
+	
+		echo "Adding the entry to the end of ${C}${CONFIGVAR}${D}"
+		sleep 0.7
+		echo
+		# Print to ~/.ssh/config
+		printf "\nHost\t%s\n\tHostname %s\n\tUser %s\n\tPort %s\n\tIdentityFile %s/.ssh/%s\n" "$HOSTVAR" "$IPVAR" "$USERVAR" "$PORTVAR" "$HOME" "$HOSTVAR" >> "$CONFIGVAR"
+		echo "${G}Entry added!${D} Here's what ${C}${CONFIGVAR}${D} looks like now:"
+		echo
+		sleep 0.7
+		cat "$CONFIGVAR"
+		echo
+		sleep 0.7
+		echo "${R}Important${D}: You can only login to ${C}${HOSTVAR}${D} without a password by executing ${G}ssh ${HOSTVAR}${D}"
+		echo
+		echo "'ssh -p ${PORTVAR} ${USERVAR}@${IPVAR}' will prompt you for a password"
+		echo
+		sleep 0.7
+	fi
+	# Host entry
+	echo
+	HOSTFILEVAR=/etc/hosts
+	# Check to see if remote host variables are set
+	if [ -z ${PORTVAR+x} ] && [ -z ${IPVAR+x} ] && [ -z ${USERVAR+x} ] && [ -z ${HOSTVAR+x} ];
+	then
+		echo "${R}All remote host variables aren't set${D}."
+		echo
+		sleep 1
+		echo "Please run option 2 first." 
+		echo
+		menuprompt
+	else
+		if [ -e "$HOSTFILEVAR" ];
+		then
+			#Backup /etc/hosts
+			echo "${C}${HOSTFILEVAR}${D} exists. Backing it up to /etc/hosts.bak, just in case."
+			echo
+			echo "${R}Important${D}: By default on most systems, ${C}${HOSTFILEVAR}${D} is owned by root. This means all regular users"\
+			"need to use ${C}sudo${D} to manipulate the file. You may be asked for your password to access the file now."
+			sudo cp /etc/hosts /etc/hosts.bak
+			echo
+			sleep 0.7
+			echo "${G}Completed backup${D}! Continuing..."
+			echo
+			sleep 0.7
+		fi	
+			
+		echo "Adding the entry to the end of ${C}${HOSTFILEVAR}${D}"
+		sleep 0.7
+		echo
+		echo "$IPVAR" "$HOSTVAR" | sudo tee -a /etc/hosts >/dev/null
+		echo "${G}Entry added${D}! Here's what ${C}${HOSTFILEVAR}${D} looks like now:"
+		echo
+		sleep 0.7
+		sudo cat "$HOSTFILEVAR"
+		echo
+		sleep 0.7
+		echo "${P}Note${D}: You can now type ${C}${HOSTVAR}${D} instead of ${C}${IPVAR}${D} where necessary."
+		echo
+		sleep 0.7
+		echo "${G}Complete!${D}"
+		echo
+		sleep 0.7
+		menuprompt
+	fi
+	
+}
+
 ### Option Functions - whiptail
 
 # Option 1 - whiptail
@@ -555,7 +769,7 @@ then
 	whiptail --title "No Variables Set" --msgbox "Please set remote host variables before running this option." 8 78
 else
 	CONFIGVAR="$HOME"/.ssh/config
-	if [ ! -e ${CONFIGVAR} ];
+	if [ ! -e "$CONFIGVAR" ];
 	then
 		whiptail --title "$HOME/.ssh/config" --msgbox "${CONFIGVAR} does not exist. Creating it now and continuing." 8 78
 		touch "$HOME"/.ssh/config
@@ -654,27 +868,28 @@ echo "${P}Goodbye${D}!"
 if [[ $OSTYPE == darwin* ]];
 then
 
-	while [ "$ANS" != "6" ]; 
+	while [ "$ANS" != "7" ]; 
 	do
 
 		# Present main menu
 		clear
-		border "SSH Setup Tool - macOS"
+		border "SSH Setup Tool - Linux"
 		echo
 		echo "${G}1${D} - Install/Update openssh-server (Linux apt-get)"
 		echo "${G}2${D} - Configure remote host variables"
 		echo "${G}3${D} - Setup ssh keys in ~/.ssh & transfer to remote host"
 		echo "${G}4${D} - Add remote host entry to ~/.ssh/config"
 		echo "${G}5${D} - Add remote host entry to /etc/hosts"
-		echo "${G}6${D} - Quit"
+		echo "${G}6${D} - Auto Setup. Runs options 2-5 with minimal prompting"
+		echo "${G}7${D} - Quit"
 		echo
 		read -rp "Selection: " ANS
-
+		
 		case $ANS in
 		
 ## 1. Install/Update openssh-server (sshd)		
 
-			1|one|ONE)
+			1)
 		
 			clear
 			border "Install/Update openSSH Server"
@@ -684,7 +899,7 @@ then
 
 ## 2. Configure remote host variables
 		
-			2|two|TWO)
+			2)
 		
 			clear
 			border "Configure Remote Host Variables"
@@ -694,7 +909,7 @@ then
 
 ## 3. Setup & send ssh keys to remote host
 		
-			3|three|THREE)
+			3)
 		
 			clear
 			border "Setup & Send SSH Keys"
@@ -704,7 +919,7 @@ then
 
 ## 4. Add remote host entry to ~/.ssh/config
 			
-			4|four|FOUR)
+			4)
 		
 			clear
 			border "Add Entry to ~/.ssh/config"
@@ -714,7 +929,7 @@ then
 
 ## 5. Add remote host entry to /etc/hosts
 		
-			5|five|FIVE)
+			5)
 		
 			clear
 			border "Add Entry to /etc/hosts"
@@ -722,9 +937,19 @@ then
 			optionfive
 			;;
 
-## 6. Quitting
+## 6. Auto Setup
 		
-			6|six|SIX)
+			6)
+		
+			clear
+			border "Auto Setup"
+			echo
+			autosetup
+			;;
+
+## 7. Quitting
+		
+			7)
 		
 			echo
 			echo "Quitting..."
@@ -764,6 +989,7 @@ then
 			"SSH Keys" "Setup & transfer SSH keys" \
 			"SSH Config File" "Add remote host entry to ~/.ssh/config" \
 			"Hosts File" "Add remote host entry to /etc/hosts" \
+			"Auto Setup" "Streamline 2-5 on the terminal with minimal prompting"\
 			"Exit" "Quit the program")
 			case $ANSWHIP in
 
@@ -802,7 +1028,17 @@ then
 				optionfivewhip
 				;;
 
-## 6. Quitting
+## 6. Auto Setup
+		
+				"Auto Setup")
+		
+				clear
+				border "Auto Setup"
+				echo
+				autosetup
+				;;
+
+## 7. Quitting
 		
 				"Exit")
 				
@@ -824,7 +1060,7 @@ then
 	elif [ "$?" = "1" ];
 	then
 
-		while [ "$ANS" != "6" ]; 
+		while [ "$ANS" != "7" ]; 
 		do
 
 			# Present main menu
@@ -836,7 +1072,8 @@ then
 			echo "${G}3${D} - Setup ssh keys in ~/.ssh & transfer to remote host"
 			echo "${G}4${D} - Add remote host entry to ~/.ssh/config"
 			echo "${G}5${D} - Add remote host entry to /etc/hosts"
-			echo "${G}6${D} - Quit"
+			echo "${G}6${D} - Auto Setup. Runs options 2-5 with minimal prompting"
+			echo "${G}7${D} - Quit"
 			echo
 			read -rp "Selection: " ANS
 			
@@ -844,7 +1081,7 @@ then
 		
 ## 1. Install/Update openssh-server (sshd)		
 
-				1|one|ONE)
+				1)
 		
 				clear
 				border "Install/Update openSSH Server"
@@ -854,7 +1091,7 @@ then
 
 ## 2. Configure remote host variables
 		
-				2|two|TWO)
+				2)
 		
 				clear
 				border "Configure Remote Host Variables"
@@ -864,7 +1101,7 @@ then
 
 ## 3. Setup & send ssh keys to remote host
 		
-				3|three|THREE)
+				3)
 		
 				clear
 				border "Setup & Send SSH Keys"
@@ -874,7 +1111,7 @@ then
 
 ## 4. Add remote host entry to ~/.ssh/config
 			
-				4|four|FOUR)
+				4)
 		
 				clear
 				border "Add Entry to ~/.ssh/config"
@@ -884,7 +1121,7 @@ then
 
 ## 5. Add remote host entry to /etc/hosts
 		
-				5|five|FIVE)
+				5)
 		
 				clear
 				border "Add Entry to /etc/hosts"
@@ -892,9 +1129,19 @@ then
 				optionfive
 				;;
 
-## 6. Quitting
+## 6. Auto Setup
 		
-				6|six|SIX)
+				6)
+		
+				clear
+				border "Auto Setup"
+				echo
+				autosetup
+				;;
+
+## 7. Quitting
+		
+				7)
 		
 				echo
 				echo "Quitting..."
