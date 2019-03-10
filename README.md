@@ -11,7 +11,8 @@ The following options are presented to the user in both 'simple' and whiptail ve
 3. Setup ssh keys in ~/.ssh & transfer to remote host
 4. Add remote host entry to ~/.ssh/config
 5. Add remote host entry to /etc/hosts
-6. Quit
+6. Auto Setup
+7. Quit
 
 ## 1. Install/Upgrade openssh-server
 
@@ -25,7 +26,7 @@ This option interactively prompts the user to enter the port, ip, username, and 
 
 Options 3, 4, & 5 require option 2 be completed.
 
-## 3 - Setup SSH Keys in ~/.ssh & Transfer to Remote Host
+## 3. Setup SSH Keys in ~/.ssh & Transfer to Remote Host
 
 This option first checks if the directory ~/.ssh exists. If it doesn't, it will prompt the user to create it.
 
@@ -35,7 +36,7 @@ It then uses the variables set in option 2 to transfer the newly created .pub ke
 
 It reminds users that passwordless login can't occur until option 4 is complete.
 
-## 4 - Add remote host entry to ~/.ssh/config
+## 4. Add remote host entry to ~/.ssh/config
 
 This option backs up ~/.ssh/config - if it exists - then prompts the user to add an entry based on the variables set in option 2 to ~/.ssh/config. The entry is formatted as such:
 
@@ -51,7 +52,7 @@ This tells the ssh agent the hostname, ip, username, port, and private key locat
 
 It reminds users that passworless login can now be done using `ssh $hostname`
 
-## 5 - Add remote host entry to /etc/hosts
+## 5. Add remote host entry to /etc/hosts
 
 This option prompts the user to backup their /etc/hosts file, then add a simple entry to it using the variables set in option 2. The entry is formatted as such:
 
@@ -59,6 +60,12 @@ This option prompts the user to backup their /etc/hosts file, then add a simple 
 
 This simply allows the user to use the remote host's hostname instead of an ip address. For example: `http://meaningoflife/` instead of `http://192.168.1.42/`
 
-## 6 - Quit
+## 6. Auto Setup
+
+This option simpy runs options 2 to 5 in succession on the terminal to cut down on user prompting. THe script stops once at the beginning to ask the user if the remote host variables they input are correct. A couple of commands prompt the user for info (ssh key passphrases, ssh passwords, sudo passwords) along the way.
+
+When complete, the auto setup process will stop and prompt the user to return to the main menu. It's recommended to look through the auto setup process output before returning to the main menu, as it will complete many tasks without prompting the user.
+
+## 7. Quit
 
 Quits the script, unsetting all variables. 
