@@ -233,7 +233,7 @@ optionthree () {
 			menuprompt
 		 
 		else 
-			#Continue with ket creation
+			#Continue with key creation
 			proceedprompt
 			echo
 			echo "${G}Creating${D} keys ${C}${HOSTVAR}${D} & ${C}${HOSTVAR}.pub${D} at ~/.ssh/. An empty passphrase stores keys in plain text."
@@ -253,14 +253,19 @@ optionthree () {
 			sleep 0.7
 			proceedprompt
 			echo
-			ssh-copy-id -i "$HOSTVAR".pub -p "$PORTVAR" "$USERVAR"@"$IPVAR"
-			sleep 0.7
-			echo "${G}Keys transferred!${D}"
-			echo
-			sleep 0.7
-			echo "${P}Note${D}: Passwordless login via rsa keys won't work until you run option 4 (add ~/.ssh/config entry)."
-			echo
-			sleep 0.7
+			if ssh-copy-id -i "$HOSTVAR".pub -p "$PORTVAR" "$USERVAR"@"$IPVAR"
+			then
+				sleep 0.7
+				echo "${G}Keys transferred!${D}"
+				echo
+				sleep 0.7
+				echo "${P}Note${D}: Passwordless login via rsa keys won't work until you run option 4 (add ~/.ssh/config entry)."
+				sleep 0.7
+			else
+				sleep 0.7
+				echo "Key transfer ${R}failed!${D} Please check for errors."
+				echo
+			fi
 			menuprompt
 		fi
 	fi
@@ -492,13 +497,18 @@ autosetup () {
 			"fingerprint to your ~/.ssh/known_hosts file. You'll need to provide ssh with ${C}${USERVAR}${D}'s password on ${C}${IPVAR}${D}."
 			echo
 			sleep 0.7
-			ssh-copy-id -i "$HOSTVAR".pub -p "$PORTVAR" "$USERVAR"@"$IPVAR"
-			sleep 0.7
-			echo "${G}Keys transferred!${D}"
-			echo
-			sleep 0.7
-			echo "${P}Note${D}: Passwordless login via rsa keys won't work until you run option 4 (add ~/.ssh/config entry)."
-			sleep 0.7
+			if ssh-copy-id -i "$HOSTVAR".pub -p "$PORTVAR" "$USERVAR"@"$IPVAR"
+			then
+				sleep 0.7
+				echo "${G}Keys transferred!${D}"
+				echo
+				sleep 0.7
+				echo "${P}Note${D}: Passwordless login via rsa keys won't work until you run option 4 (add ~/.ssh/config entry)."
+				sleep 0.7
+			else
+				sleep 0.7
+				echo "Key transfer ${R}failed!${D} Please check for errors."
+			fi
 		fi
 	fi
 	# Config entry
@@ -873,7 +883,7 @@ then
 
 		# Present main menu
 		clear
-		border "SSH Setup Tool - Linux"
+		border "SSH Setup Tool - macOS"
 		echo
 		echo "${G}1${D} - Install/Update openssh-server (Linux apt-get)"
 		echo "${G}2${D} - Configure remote host variables"
