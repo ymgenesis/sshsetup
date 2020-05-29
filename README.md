@@ -62,9 +62,9 @@ This simply allows the user to use the remote host's hostname instead of an ip a
 
 ## 6. Auto Setup
 
-This option simpy runs options 2 to 5 in succession on the terminal to cut down on user prompting. THe script stops once at the beginning to ask the user if the remote host variables they input are correct. A couple of commands prompt the user for info (ssh key passphrases, ssh passwords, sudo passwords) along the way.
+This option simpy runs options 2 to 5 in succession on the terminal to cut down on user prompting. The script stops once at the beginning to ask the user if the remote host variables they input are correct. A couple of commands prompt the user for info (ssh key passphrases, ssh passwords, sudo passwords) along the way.
 
-When complete, the auto setup process will stop and prompt the user to return to the main menu. It's recommended to look through the auto setup process output before returning to the main menu, as it will complete many tasks without prompting the user.
+When complete, the auto setup process will stop and prompt the user to return to the main menu. It's recommended to look through the auto setup process output for errors before returning to the main menu.
 
 ## 7. Quit
 
